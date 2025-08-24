@@ -137,8 +137,8 @@
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/Raman-kr1/health-monitoring-system.git
-cd health-monitoring-system
+git clone https://github.com/Raman-kr1/Health.git
+cd Health
 ```
 
 2. **Set up the backend**
