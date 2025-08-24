@@ -177,7 +177,7 @@ npm install
    - Get Google Gemini API key: [https://makersuite.google.com/app/apikey](https://makersuite.google.com/app/apikey)
    - Add to backend `.env` file
 
-### 🐳 Docker Setup (Alternative)
+### 🐳 Docker Setup (Alternative but Best)
 
 ```bash
 docker-compose up --build
@@ -202,7 +202,7 @@ npm start
 ```
 
 ### Default Ports
-- Frontend: `http://localhost:3000`
+- Frontend: `http://localhost:3001`
 - Backend API: `http://localhost:8000`
 - API Documentation: `http://localhost:8000/docs`
 
@@ -292,7 +292,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <sub><b>Raman Kumar</b></sub>
 </a>
 <br />
-<a href="https://github.com/Raman-kr1/health-monitoring-system/commits?author=Raman-kr1" title="Code">💻</a>
+<a href="https://github.com/Raman-kr1/Health/commits?author=Raman-kr1" title="Code">💻</a>
 <a href="#design-Raman-kr1" title="Design">🎨</a>
 <a href="#maintenance-Raman-kr1" title="Maintenance">🚧</a>
 </td>
