@@ -68,13 +68,14 @@
 - **⚡ Fast**: Optimized with FastAPI backend and React frontend
 - **📈 Scalable**: Microservices-ready architecture
 - **🎨 Modern UI**: Clean, intuitive interface with real-time updates
-
+<!--
 ## 🖼️ Screenshots
 
 <div align="center">
 <table>
 <tr>
-<td><img src="https://via.placeholder.com/400x300?text=Dashboard" alt="Dashboard" width="400"/></td>
+<td><img src="<img width="1886" height="1060" alt="image" src="https://github.com/user-attachments/assets/a1b8987a-fc47-4496-aa81-79f6449e1c67" />
+" alt="Dashboard" width="400"/></td>
 <td><img src="https://via.placeholder.com/400x300?text=Health+Charts" alt="Health Charts" width="400"/></td>
 </tr>
 <tr>
@@ -91,6 +92,7 @@
 </tr>
 </table>
 </div>
+-->
 
 ## 🛠️ Tech Stack
 
