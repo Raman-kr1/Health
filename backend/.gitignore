@@ -384,6 +384,9 @@ cython_debug/
 *.db
 *.sqlite
 
+# dfsd
+.env
+
 
 
 
