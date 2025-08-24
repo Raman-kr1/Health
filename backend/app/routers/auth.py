@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import timedelta
+from pydantic import BaseModel
 
 from ..database import get_db
 from ..models.user import User
@@ -12,16 +13,21 @@ from ..config import get_settings
 router = APIRouter()
 settings = get_settings()
 
+# Define a Pydantic model that matches the JSON from the frontend
+class UserCreate(BaseModel):
+    username: str
+    email: str
+    password: str
+
+# Update the register function to use the new model
 @router.post("/register")
 async def register(
-    username: str,
-    email: str,
-    password: str,
+    user: UserCreate, # <-- This now expects a JSON object matching the UserCreate model
     db: AsyncSession = Depends(get_db)
 ):
     # Check if user exists
     result = await db.execute(
-        select(User).where((User.email == email) | (User.username == username))
+        select(User).where((User.email == user.email) | (User.username == user.username))
     )
     if result.scalar_one_or_none():
         raise HTTPException(
@@ -30,17 +36,16 @@ async def register(
         )
     
     # Create new user
-    user = User(
-        username=username,
-        email=email,
-        hashed_password=get_password_hash(password)
+    new_user = User(
+        username=user.username,
+        email=user.email,
+        hashed_password=get_password_hash(user.password)
     )
     
-    db.add(user)
+    db.add(new_user)
     await db.commit()
     
     return {"message": "User registered successfully"}
-
 @router.post("/token")
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
