@@ -2,7 +2,8 @@
 /node_modules
 /.pnp
 .pnp.js
-
+# dfsd
+.env
 # Testing
 /coverage
 
