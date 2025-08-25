@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
-from datetime import datetime, timedelta
-from typing import List
+from datetime import datetime, timezone
 
 from ..database import get_db
 from ..models.appointment import Appointment
@@ -10,11 +9,17 @@ from ..utils.security import get_current_user
 
 router = APIRouter()
 
-@router.post("/appointments")
+from pydantic import BaseModel
+
+
+class AppointmentCreate(BaseModel):
+    doctor_name: str
+    appointment_date: datetime
+    reason: str
+
+@router.post("/")
 async def create_appointment(
-    doctor_name: str,
-    appointment_date: datetime,
-    reason: str,
+    payload: AppointmentCreate,
     current_user = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -24,7 +29,7 @@ async def create_appointment(
         .where(
             and_(
                 Appointment.user_id == current_user.id,
-                Appointment.appointment_date == appointment_date,
+                Appointment.appointment_date == payload.appointment_date,
                 Appointment.status != "cancelled"
             )
         )
@@ -36,17 +41,18 @@ async def create_appointment(
     
     appointment = Appointment(
         user_id=current_user.id,
-        doctor_name=doctor_name,
-        appointment_date=appointment_date,
-        reason=reason
+        doctor_name=payload.doctor_name,
+        appointment_date=payload.appointment_date,
+        reason=payload.reason
     )
     
     db.add(appointment)
     await db.commit()
+    await db.refresh(appointment)
     
     return {"message": "Appointment scheduled successfully", "id": appointment.id}
 
-@router.get("/appointments")
+@router.get("/")
 async def get_appointments(
     include_past: bool = False,
     current_user = Depends(get_current_user),
@@ -55,7 +61,7 @@ async def get_appointments(
     query = select(Appointment).where(Appointment.user_id == current_user.id)
     
     if not include_past:
-        query = query.where(Appointment.appointment_date >= datetime.utcnow())
+        query = query.where(Appointment.appointment_date >= datetime.now(timezone.utc))
     
     result = await db.execute(query.order_by(Appointment.appointment_date))
     appointments = result.scalars().all()
@@ -71,7 +77,7 @@ async def get_appointments(
         for apt in appointments
     ]
 
-@router.get("/appointments/optimize")
+@router.get("/optimize") 
 async def optimize_appointments(
     current_user = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -82,7 +88,7 @@ async def optimize_appointments(
         .where(
             and_(
                 Appointment.user_id == current_user.id,
-                Appointment.appointment_date >= datetime.utcnow(),
+                Appointment.appointment_date >= datetime.now(timezone.utc),
                 Appointment.status == "scheduled"
             )
         )

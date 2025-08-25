@@ -10,14 +10,14 @@ from ..utils.security import get_current_user
 
 router = APIRouter()
 
-@router.post("/chat/symptoms")
+@router.post("/symptoms")
 async def analyze_symptoms(
     symptoms: str,
     current_user = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     # Get recent health data for context
-    since_date = datetime.utcnow() - timedelta(days=7)
+    since_date = datetime.now() - timedelta(days=7)
     
     result = await db.execute(
         select(HealthData)
@@ -43,10 +43,10 @@ async def analyze_symptoms(
     
     return {
         "analysis": analysis,
-        "timestamp": datetime.utcnow()
+        "timestamp": datetime.now()
     }
 
-@router.post("/chat/medicine-check")
+@router.post("/medicine-check")
 async def check_medicine_interactions(
     medicines: list[str],
     current_user = Depends(get_current_user)
@@ -60,5 +60,5 @@ async def check_medicine_interactions(
     return {
         "medicines": medicines,
         "interaction_analysis": interaction_check,
-        "timestamp": datetime.utcnow()
+        "timestamp": datetime.now()
     }
