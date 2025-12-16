@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import timedelta
 from pydantic import BaseModel
+from typing import Optional, List, Dict
 import os
 
 from ..database import get_db
@@ -32,14 +33,14 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     is_guest: bool = False
-    guest_id: str | None = None
-    expires_in: int | None = None
+    guest_id: Optional[str] = None
+    expires_in: Optional[int] = None
 
 
 class GuestInfo(BaseModel):
     allowed: bool
-    features: dict
-    limitations: list
+    features: Dict[str, bool]
+    limitations: List[str]
 
 
 @router.post("/register")
