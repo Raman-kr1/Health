@@ -4,18 +4,18 @@ import { Toaster } from 'react-hot-toast';
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import Register from './components/Register';
+import { isAuthenticated } from './services/api';
 import './App.css';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuth, setIsAuth] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
+    setIsAuth(isAuthenticated());
   }, []);
 
   const PrivateRoute = ({ children }) => {
-    return isAuthenticated ? children : <Navigate to="/login" />;
+    return isAuth ? children : <Navigate to="/login" />;
   };
 
   return (
@@ -24,9 +24,11 @@ function App() {
         <Toaster position="top-right" />
         <Routes>
           <Route path="/login" element={
-            <Login setIsAuthenticated={setIsAuthenticated} />
+            isAuth ? <Navigate to="/" /> : <Login setIsAuthenticated={setIsAuth} />
           } />
-          <Route path="/register" element={<Register />} />
+          <Route path="/register" element={
+            isAuth ? <Navigate to="/" /> : <Register />
+          } />
           <Route path="/" element={
             <PrivateRoute>
               <Dashboard />

@@ -600,11 +600,255 @@
     border-radius: 5px;
     pointer-events: none;
   }
+
+  /* Guest Mode Styles */
+  .auth-subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 25px;
+    font-size: 14px;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+  }
+
+  .divider::before,
+  .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
+  }
+
+  .divider span {
+    padding: 0 16px;
+    color: #9ca3af;
+    font-size: 14px;
+  }
+
+  .guest-btn {
+    width: 100%;
+    padding: 12px;
+    background: #f3f4f6;
+    color: #374151;
+    border: 2px solid #e5e7eb;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .guest-btn:hover {
+    background: #e5e7eb;
+    border-color: #d1d5db;
+  }
+
+  .guest-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .guest-info-box {
+    margin-top: 20px;
+    padding: 16px;
+    background: #f0fdf4;
+    border-radius: 8px;
+    border: 1px solid #bbf7d0;
+  }
+
+  .guest-info-box p {
+    margin: 0 0 10px 0;
+    color: #166534;
+    font-size: 14px;
+    text-align: left;
+  }
+
+  .guest-info-box ul {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 13px;
+    color: #15803d;
+    text-align: left;
+  }
+
+  .guest-info-box li {
+    margin: 4px 0;
+  }
+
+  /* Guest Banner */
+  .guest-banner {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: #78350f;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    flex-wrap: wrap;
+  }
+
+  .upgrade-btn {
+    background: #78350f;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.3s;
+  }
+
+  .upgrade-btn:hover {
+    background: #92400e;
+  }
+
+  .dismiss-btn {
+    background: transparent;
+    border: none;
+    color: #78350f;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px 8px;
+  }
+
+  .dismiss-btn:hover {
+    opacity: 0.7;
+  }
+
+  /* Dashboard Header Updates for Guest */
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .user-greeting {
+    color: #6b7280;
+    font-size: 14px;
+  }
+
+  .guest-badge {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .signup-btn {
+    padding: 8px 16px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-size: 14px;
+  }
+
+  .signup-btn:hover {
+    background: #5a67d8;
+  }
+
+  /* Restricted Nav Button */
+  .dashboard-nav button.restricted {
+    color: #9ca3af;
+    position: relative;
+  }
+
+  .dashboard-nav button .lock-icon {
+    margin-left: 6px;
+    font-size: 12px;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .empty-state p {
+    color: #6b7280;
+    margin-bottom: 10px;
+    font-size: 16px;
+  }
+
+  .cta-btn {
+    margin-top: 20px;
+    padding: 12px 30px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .cta-btn:hover {
+    background: #5a67d8;
+  }
+
+  /* Restricted Feature Message */
+  .restricted-feature {
+    text-align: center;
+    padding: 60px 40px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .restricted-feature h2 {
+    color: #374151;
+    margin-bottom: 16px;
+  }
+
+  .restricted-feature p {
+    color: #6b7280;
+    margin-bottom: 12px;
+  }
+
+  .restricted-feature ul {
+    text-align: left;
+    margin: 20px auto;
+    max-width: 300px;
+    color: #374151;
+  }
+
+  .restricted-feature li {
+    margin: 8px 0;
+  }
   
   /* Responsive Design */
   @media (max-width: 768px) {
     .dashboard-header {
       padding: 15px 20px;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .header-left,
+    .header-right {
+      width: 100%;
+      justify-content: center;
     }
     
     .dashboard-header h1 {
@@ -630,5 +874,11 @@
     
     .message-content {
       max-width: 85%;
+    }
+
+    .guest-banner {
+      flex-direction: column;
+      text-align: center;
+      gap: 10px;
     }
   }

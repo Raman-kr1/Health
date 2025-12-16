@@ -9,10 +9,40 @@ const api = axios.create({
   },
 });
 
+// Token and user info management
+const TOKEN_KEY = 'token';
+const USER_INFO_KEY = 'user_info';
+
+export const getStoredToken = () => localStorage.getItem(TOKEN_KEY);
+
+export const getStoredUser = () => {
+  const userInfo = localStorage.getItem(USER_INFO_KEY);
+  return userInfo ? JSON.parse(userInfo) : null;
+};
+
+export const setAuthData = (token, userInfo) => {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(USER_INFO_KEY, JSON.stringify(userInfo));
+};
+
+export const clearAuthData = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_INFO_KEY);
+};
+
+export const isGuest = () => {
+  const user = getStoredUser();
+  return user?.is_guest === true;
+};
+
+export const isAuthenticated = () => {
+  return !!getStoredToken();
+};
+
 // Add token to requests
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = getStoredToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -28,7 +58,7 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
+      clearAuthData();
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -37,14 +67,45 @@ api.interceptors.response.use(
 
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
-  login: (data) => {
+  
+  login: async (data) => {
     const formData = new FormData();
     formData.append('username', data.username);
     formData.append('password', data.password);
-    return api.post('/auth/token', formData, {
+    
+    const response = await api.post('/auth/token', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
+    
+    // Store auth data
+    setAuthData(response.data.access_token, {
+      username: data.username,
+      is_guest: false
+    });
+    
+    return response;
   },
+  
+  guestLogin: async () => {
+    const response = await api.post('/auth/guest');
+    
+    // Store guest auth data
+    setAuthData(response.data.access_token, {
+      username: response.data.guest_id,
+      is_guest: true,
+      expires_in: response.data.expires_in
+    });
+    
+    return response;
+  },
+  
+  getGuestInfo: () => api.get('/auth/guest/info'),
+  
+  getCurrentUser: () => api.get('/auth/me'),
+  
+  logout: () => {
+    clearAuthData();
+  }
 };
 
 export const healthAPI = {
@@ -53,6 +114,7 @@ export const healthAPI = {
   getHealthTrends: () => api.get('/health/health-trends'),
   addMedicine: (data) => api.post('/health/medicines', data),
   getMedicines: () => api.get('/health/medicines'),
+  clearGuestData: () => api.delete('/health/clear-guest-data'),
 };
 
 export const chatAPI = {

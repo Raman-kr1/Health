@@ -4,24 +4,31 @@ services:
   postgres:
     image: timescale/timescaledb:latest-pg14
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: health_monitoring
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-health_monitoring}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build: ./backend
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:password@postgres:5432/health_monitoring
-      SECRET_KEY: your-secret-key-here-change-this
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-health_monitoring}
+      SECRET_KEY: ${SECRET_KEY:-change-this-in-production}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+      ALLOW_GUEST_ACCESS: ${ALLOW_GUEST_ACCESS:-true}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   frontend:
