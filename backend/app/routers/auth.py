@@ -52,7 +52,7 @@ async def register(
     result = await db.execute(
         select(User).where((User.email == user.email) | (User.username == user.username))
     )
-    if result.scalar_one_or_none():
+    if result.scalars().first():
         raise HTTPException(
             status_code=400,
             detail="Username or email already registered"

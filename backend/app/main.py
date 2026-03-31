@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 from .database import engine, Base
 from .routers import auth, health, chat, appointments
+from .models import user, appointment, health_data # Ensure all models are imported
 
 # Create tables on startup
 @asynccontextmanager
@@ -25,7 +26,7 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"], # Added the new port
+    allow_origins=["*"], # Allow all origins for easier testing, or specify via env var
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
