@@ -6,9 +6,9 @@ class Appointment(Base):
     __tablename__ = "appointments"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
     doctor_name = Column(String)
-    appointment_date = Column(DateTime(timezone=True))
+    appointment_date = Column(DateTime(timezone=True), index=True)
     reason = Column(Text)
     status = Column(String, default="scheduled")
     

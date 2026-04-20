@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { chatAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -56,9 +57,13 @@ function ChatBot() {
         {messages.map((message, index) => (
           <div key={index} className={`message ${message.type}`}>
             <div className="message-content">
-              {message.text.split('\n').map((line, i) => (
-                <p key={i}>{line}</p>
-              ))}
+              {message.type === 'bot' ? (
+                <ReactMarkdown>{message.text}</ReactMarkdown>
+              ) : (
+                message.text.split('\n').map((line, i) => (
+                  <p key={i}>{line}</p>
+                ))
+              )}
             </div>
             {message.timestamp && (
               <div className="message-time">{message.timestamp}</div>

@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from pydantic import BaseModel
+from typing import List
 
 from ..database import get_db
 from ..models.health_data import HealthData
@@ -10,55 +12,61 @@ from ..utils.security import get_current_user
 
 router = APIRouter()
 
+
+class SymptomRequest(BaseModel):
+    symptoms: str
+
+
+class MedicineRequest(BaseModel):
+    medicines: List[str]
+
+
 @router.post("/symptoms")
 async def analyze_symptoms(
-    symptoms: str,
-    current_user = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    payload: SymptomRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    # Get recent health data for context
-    since_date = datetime.now() - timedelta(days=7)
-    
-    result = await db.execute(
-        select(HealthData)
-        .where(HealthData.user_id == current_user.id)
-        .where(HealthData.timestamp >= since_date)
-        .order_by(desc(HealthData.timestamp))
-        .limit(5)
-    )
-    recent_data = result.scalars().all()
-    
-    health_history = {}
-    if recent_data:
-        latest = recent_data[0]
-        health_history = {
-            "heart_rate": latest.heart_rate,
-            "blood_pressure": f"{latest.blood_pressure_systolic}/{latest.blood_pressure_diastolic}",
-            "temperature": latest.temperature,
-            "weight": latest.weight
-        }
-    
-    gemini_service = GeminiService()
-    analysis = await gemini_service.analyze_symptoms(symptoms, health_history)
-    
-    return {
-        "analysis": analysis,
-        "timestamp": datetime.now()
-    }
+    health_history: dict = {}
+    user_id = current_user.get("id")
+
+    if user_id is not None:
+        since_date = datetime.now(timezone.utc) - timedelta(days=7)
+        result = await db.execute(
+            select(HealthData)
+            .where(HealthData.user_id == user_id)
+            .where(HealthData.timestamp >= since_date)
+            .order_by(desc(HealthData.timestamp))
+            .limit(5)
+        )
+        recent_data = result.scalars().all()
+
+        if recent_data:
+            latest = recent_data[0]
+            health_history = {
+                "heart_rate": latest.heart_rate,
+                "blood_pressure": f"{latest.blood_pressure_systolic}/{latest.blood_pressure_diastolic}",
+                "temperature": latest.temperature,
+                "weight": latest.weight,
+            }
+
+    analysis = await GeminiService().analyze_symptoms(payload.symptoms, health_history)
+
+    return {"analysis": analysis, "timestamp": datetime.now(timezone.utc)}
+
 
 @router.post("/medicine-check")
 async def check_medicine_interactions(
-    medicines: list[str],
-    current_user = Depends(get_current_user)
+    payload: MedicineRequest,
+    current_user: dict = Depends(get_current_user),
 ):
-    if len(medicines) < 2:
+    if len(payload.medicines) < 2:
         return {"message": "Please provide at least 2 medicines to check interactions"}
-    
-    gemini_service = GeminiService()
-    interaction_check = await gemini_service.check_medicine_interaction(medicines)
-    
+
+    interaction_check = await GeminiService().check_medicine_interaction(payload.medicines)
+
     return {
-        "medicines": medicines,
+        "medicines": payload.medicines,
         "interaction_analysis": interaction_check,
-        "timestamp": datetime.now()
+        "timestamp": datetime.now(timezone.utc),
     }

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import * as d3 from 'd3';
 import { format } from 'date-fns';
 
@@ -6,8 +6,17 @@ function HealthChart({ data, trends }) {
   const svgRef = useRef(null);
   const containerRef = useRef(null);
 
+  const validData = useMemo(() => {
+    if (!data) return [];
+    const parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%S");
+    return data
+      .filter(d => d.heart_rate)
+      .map(d => ({ ...d, date: parseTime(d.timestamp.split('.')[0]) }))
+      .sort((a, b) => a.date - b.date);
+  }, [data]);
+
   useEffect(() => {
-    if (!data || data.length === 0) return;
+    if (!validData || validData.length === 0) return;
 
     const container = containerRef.current;
     const margin = { top: 20, right: 30, bottom: 40, left: 50 };
@@ -23,18 +32,6 @@ function HealthChart({ data, trends }) {
 
     const g = svg.append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
-
-    // Parse dates and filter valid data
-    const parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%S");
-    const validData = data
-      .filter(d => d.heart_rate)
-      .map(d => ({
-        ...d,
-        date: parseTime(d.timestamp.split('.')[0])
-      }))
-      .sort((a, b) => a.date - b.date);
-
-    if (validData.length === 0) return;
 
     // Set up scales
     const xScale = d3.scaleTime()
@@ -128,7 +125,7 @@ function HealthChart({ data, trends }) {
           .text(`Trend: ${trendInfo.current_trend}`);
       }
   
-    }, [data, trends]);
+    }, [validData, trends]);
   
     return (
       <div className="health-chart" ref={containerRef}>
@@ -151,5 +148,5 @@ function HealthChart({ data, trends }) {
     );
   }
   
-  export default HealthChart;
+  export default React.memo(HealthChart);
             

@@ -26,7 +26,7 @@ class PredictionService:
             if metric in df.columns and df[metric].notna().sum() > 2:
                 # Simple linear regression
                 X = df['time_index'].values.reshape(-1, 1)
-                y = df[metric].fillna(method='ffill').values
+                y = df[metric].ffill().values
                 
                 model = LinearRegression()
                 model.fit(X, y)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HealthChart from './HealthChart';
 import ChatBot from './ChatBot';
@@ -16,50 +16,50 @@ function Dashboard() {
   const [showGuestBanner, setShowGuestBanner] = useState(false);
   const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    const currentUser = getStoredUser();
-    setUser(currentUser);
-    setShowGuestBanner(currentUser?.is_guest === true);
-    loadHealthData();
-    loadTrends();
-  }, []);
-
-  const loadHealthData = async () => {
+  const loadHealthData = useCallback(async () => {
     try {
       const response = await healthAPI.getHealthData();
       setHealthData(response.data);
     } catch (error) {
       toast.error('Failed to load health data');
     }
-  };
+  }, []);
 
-  const loadTrends = async () => {
+  const loadTrends = useCallback(async () => {
     try {
       const response = await healthAPI.getHealthTrends();
       setTrends(response.data);
     } catch (error) {
       console.error('Failed to load trends:', error);
     }
-  };
+  }, []);
 
-  const handleLogout = () => {
+  useEffect(() => {
+    const currentUser = getStoredUser();
+    setUser(currentUser);
+    setShowGuestBanner(currentUser?.is_guest === true);
+    loadHealthData();
+    loadTrends();
+  }, [loadHealthData, loadTrends]);
+
+  const handleLogout = useCallback(() => {
     clearAuthData();
     navigate('/login');
-  };
+  }, [navigate]);
 
-  const handleUpgradeAccount = () => {
+  const handleUpgradeAccount = useCallback(() => {
     clearAuthData();
     navigate('/register');
-  };
+  }, [navigate]);
 
-  const handleTabClick = (tab) => {
+  const handleTabClick = useCallback((tab) => {
     // Check if guest is trying to access restricted features
     if (isGuest() && tab === 'appointments') {
       toast.error('Please create an account to schedule appointments');
       return;
     }
     setActiveTab(tab);
-  };
+  }, []);
 
   return (
     <div className="dashboard">

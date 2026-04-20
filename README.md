@@ -94,6 +94,34 @@
 </div>
 -->
 
+## 🏗️ Architecture
+
+```mermaid
+flowchart TB
+    subgraph Browser
+        F1["Frontend<br/>React<br/>:3000<br/>Health Dashboard & Chat UI"]
+    end
+
+    subgraph Backend Stack
+        B1["Backend<br/>FastAPI<br/>:8000"]
+        R1["API Routers<br/>/api/auth, /api/health<br/>/api/chat, /api/appointments"]
+        S1["Core Services<br/>Prediction, Gemini/Ollama LLM<br/>Medicine Checker"]
+    end
+
+    subgraph Data & AI
+        SQLITE[(SQLite<br/>health.db)]
+        LLM["Ollama (llama3) / Gemini<br/>Local :11434 / Cloud API"]
+        ML["Scikit-Learn ML Models<br/>Health Trend Predictions"]
+    end
+
+    F1 -->|REST API (JSON)| B1
+    B1 --> R1
+    R1 --> S1
+    S1 -->|SQLAlchemy (aiosqlite)| SQLITE
+    S1 <-->|Prompt / Context| LLM
+    S1 <-->|Data Analysis| ML
+```
+
 ## 🛠️ Tech Stack
 
 <div align="center">
@@ -101,9 +129,9 @@
 ### Backend
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat-square&logo=postgresql&logoColor=white)
-![TimescaleDB](https://img.shields.io/badge/TimescaleDB-FDB515?style=flat-square&logo=timescale&logoColor=black)
+![SQLite](https://img.shields.io/badge/SQLite-07405E?style=flat-square&logo=sqlite&logoColor=white)
 ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-CC2927?style=flat-square)
+![SQLite](https://img.shields.io/badge/SQLite-07405E?style=flat-square&logo=sqlite&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)
 
 ### Frontend
@@ -282,6 +310,27 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## chat
+ll plan items applied, plus an LLM fallback. Summary:
+
+Backend
+
+main.py — CORS from env (CORS_ORIGINS).
+config.py — added cors_origins, ollama_base_url, ollama_model, pool settings.
+database.py — pool_size=10, max_overflow=20, pool_pre_ping.
+services/gemini_service.py — async (asyncio.to_thread), input sanitization/length cap, guardrail prompts, and Llama3 fallback via Ollama when Gemini is missing or errors.
+routers/chat.py — pydantic body models, guest-safe (no id deref), tz-aware datetimes.
+routers/appointments.py — switched to get_authenticated_user (was broken: dict used as object).
+routers/health.py — tz-aware UTC everywhere, asyncio.Lock around guest dicts, limit/offset pagination.
+models/health_data.py, appointment.py — indexes on user_id, composite (user_id, timestamp).
+services/prediction_service.py — .ffill().
+utils/security.py — tz-aware UTC.
+Frontend
+
+HealthChart.jsx — React.memo + useMemo for parsed series.
+Dashboard.jsx — useCallback on handlers/loaders.
+services/api.js — one-shot retry on network failure for GETs; fixed /appointments/ path.
+New env knobs: CORS_ORIGINS, OLLAMA_BASE_URL, OLLAMA_MODEL (default llama3). Install deps unchanged (httpx already present). Run Ollama locally with ollama pull llama3 && ollama serve for fallback. AST check on all backend files passes.
 
 ## 👥 Team
 

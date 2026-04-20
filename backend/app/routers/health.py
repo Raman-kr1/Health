@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+import asyncio
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from typing import List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
 
 from ..database import get_db
@@ -15,6 +16,7 @@ router = APIRouter()
 # In-memory storage for guest data (use Redis in production)
 guest_health_data: dict = {}
 guest_medicine_data: dict = {}
+_guest_lock = asyncio.Lock()
 
 
 class HealthDataCreate(BaseModel):
@@ -44,17 +46,16 @@ async def add_health_data(
     # Handle guest users - store in memory
     if current_user.get("is_guest"):
         guest_id = current_user["username"]
-        if guest_id not in guest_health_data:
-            guest_health_data[guest_id] = []
-        
-        record_id = len(guest_health_data[guest_id]) + 1
-        guest_record = {
-            "id": record_id,
-            "timestamp": datetime.utcnow(),
-            **data.model_dump()
-        }
-        guest_health_data[guest_id].append(guest_record)
-        
+        async with _guest_lock:
+            bucket = guest_health_data.setdefault(guest_id, [])
+            record_id = len(bucket) + 1
+            bucket.append(
+                {
+                    "id": record_id,
+                    "timestamp": datetime.now(timezone.utc),
+                    **data.model_dump(),
+                }
+            )
         return {"message": "Health data recorded successfully (guest session)"}
     
     # Handle registered users - store in database
@@ -78,30 +79,32 @@ async def add_health_data(
 
 @router.get("/health-data")
 async def get_health_data(
-    days: int = 30,
+    days: int = Query(30, ge=1, le=365),
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    since_date = datetime.now(timezone.utc) - timedelta(days=days)
+
     # Handle guest users
     if current_user.get("is_guest"):
         guest_id = current_user["username"]
         records = guest_health_data.get(guest_id, [])
-        since_date = datetime.utcnow() - timedelta(days=days)
-        
-        return [
-            record for record in records
-            if record["timestamp"] >= since_date
-        ]
-    
+        filtered = [r for r in records if r["timestamp"] >= since_date]
+        filtered.sort(key=lambda r: r["timestamp"], reverse=True)
+        return filtered[offset : offset + limit]
+
     # Handle registered users
     user_id = current_user.get("id")
-    since_date = datetime.utcnow() - timedelta(days=days)
-    
+
     result = await db.execute(
         select(HealthData)
         .where(HealthData.user_id == user_id)
         .where(HealthData.timestamp >= since_date)
         .order_by(desc(HealthData.timestamp))
+        .limit(limit)
+        .offset(offset)
     )
     health_records = result.scalars().all()
     
@@ -151,7 +154,7 @@ async def get_health_trends(
     
     # Handle registered users
     user_id = current_user.get("id")
-    since_date = datetime.utcnow() - timedelta(days=30)
+    since_date = datetime.now(timezone.utc) - timedelta(days=30)
     
     result = await db.execute(
         select(HealthData)
@@ -186,16 +189,10 @@ async def add_medicine(
     # Handle guest users
     if current_user.get("is_guest"):
         guest_id = current_user["username"]
-        if guest_id not in guest_medicine_data:
-            guest_medicine_data[guest_id] = []
-        
-        record_id = len(guest_medicine_data[guest_id]) + 1
-        guest_record = {
-            "id": record_id,
-            **data.model_dump()
-        }
-        guest_medicine_data[guest_id].append(guest_record)
-        
+        async with _guest_lock:
+            bucket = guest_medicine_data.setdefault(guest_id, [])
+            record_id = len(bucket) + 1
+            bucket.append({"id": record_id, **data.model_dump()})
         return {"message": "Medicine record added successfully (guest session)"}
     
     # Handle registered users
@@ -257,10 +254,9 @@ async def clear_guest_data(current_user: dict = Depends(get_current_user)):
         )
     
     guest_id = current_user["username"]
-    
-    if guest_id in guest_health_data:
-        del guest_health_data[guest_id]
-    if guest_id in guest_medicine_data:
-        del guest_medicine_data[guest_id]
+
+    async with _guest_lock:
+        guest_health_data.pop(guest_id, None)
+        guest_medicine_data.pop(guest_id, None)
     
     return {"message": "Guest data cleared successfully"}

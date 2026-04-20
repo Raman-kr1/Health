@@ -53,14 +53,26 @@ api.interceptors.request.use(
   }
 );
 
-// Handle token expiration
+// Handle token expiration + one-shot retry on network failure for idempotent GETs
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    const config = error.config || {};
+
     if (error.response?.status === 401) {
       clearAuthData();
       window.location.href = '/login';
+      return Promise.reject(error);
     }
+
+    const isNetworkError = !error.response;
+    const isIdempotent = (config.method || 'get').toLowerCase() === 'get';
+    if (isNetworkError && isIdempotent && !config.__retried) {
+      config.__retried = true;
+      await new Promise((r) => setTimeout(r, 500));
+      return api(config);
+    }
+
     return Promise.reject(error);
   }
 );
@@ -124,9 +136,9 @@ export const chatAPI = {
 };
 
 export const appointmentAPI = {
-  createAppointment: (data) => api.post('/appointments', data),
-  getAppointments: (includePast = false) => 
-    api.get(`/appointments?include_past=${includePast}`),
+  createAppointment: (data) => api.post('/appointments/', data),
+  getAppointments: (includePast = false) =>
+    api.get(`/appointments/?include_past=${includePast}`),
   optimizeAppointments: () => api.get('/appointments/optimize'),
 };
 
